@@ -2,16 +2,16 @@ const multer = require('multer');
 const upload = multer({ dest: 'uploads/' }); // Destination où les fichiers seront stockés
 
 // Dans votre route
-app.post('/api/hotels', upload.single('photo'), async (req, res) => {
+app.post('/api/hotels', upload.single('photo'), async (res) => {
   try {
     const hotelData = {
-      name: req.body.name,
-      address: req.body.address,
-      email: req.body.email,
-      phone: req.body.phone,
-      price: req.body.price,
-      currency: req.body.currency,
-      photo: req.file.path // Utilisez le chemin du fichier téléchargé
+      name: body.name,
+      address: body.address,
+      email: body.email,
+      phone: body.phone,
+      price: body.price,
+      currency: body.currency,
+      photo: file.path // Utilisez le chemin du fichier téléchargé
     };
 
     // Enregistrez l'hôtel dans la base de données...

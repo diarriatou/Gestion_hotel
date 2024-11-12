@@ -1,7 +1,7 @@
-// controllers/authController.js
+// Logique metiers
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
-
+const crypto = require('crypto');
 // Générer le JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -89,7 +89,7 @@ exports.login = async (req, res) => {
 
     // Générer le token
     const token = generateToken(user._id);
-
+  
     res.status(200).json({
       success: true,
       data: {
@@ -127,3 +127,54 @@ exports.logout = async (req, res) => {
     });
   }
 };
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Aucun utilisateur trouvé avec cet email'
+      });
+    }
+     // Générer un token de réinitialisation
+     const resetToken = crypto.randomBytes(20).toString('hex');
+     user.resetPasswordToken = crypto
+       .createHash('sha256')
+       .update(resetToken)
+       .digest('hex');
+     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+ 
+     await user.save();
+ 
+     // Créer l'URL de réinitialisation
+     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+ 
+     // Contenu de l'email
+     const message = `
+       Vous recevez cet email car vous avez demandé la réinitialisation de votre mot de passe.
+       Cliquez sur ce lien pour réinitialiser votre mot de passe : ${resetUrl}
+       Ce lien expirera dans 10 minutes.
+       Si vous n'avez pas demandé de réinitialisation, ignorez cet email.
+     `;
+ 
+     //await sendEmail({
+       //email: user.email,
+       //subject: 'Réinitialisation de mot de passe',
+       //message
+     //});
+ 
+     res.status(200).json({
+       success: true,
+       data: 'Email envoyé'
+     });
+   } catch (error) {
+     console.error('Forgot password error:', error);
+     res.status(500).json({
+       success: false,
+       error: 'Email n\'a pas pu être envoyé'
+     });
+   }
+ };
